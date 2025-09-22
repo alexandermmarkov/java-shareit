@@ -1,19 +1,13 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
-/**
- * TODO Sprint add-controllers.
- */
 @Data
-@NoArgsConstructor
-@EqualsAndHashCode(of = {"email"})
-public class User {
-    private Long id;
+@AllArgsConstructor
+public class UserDto {
     private String name;
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Email(message = "Некорректный формат электронной почты")
