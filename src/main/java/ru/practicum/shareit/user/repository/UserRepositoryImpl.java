@@ -18,20 +18,20 @@ public class UserRepositoryImpl implements UserRepository {
     private static long userId = 0;
 
     @Override
-    public User createUser(UserDto userDto) {
-        User newUser = UserMapper.toUser(userDto, generateID());
+    public UserDto createUser(UserDto userDto) {
+        User user = UserMapper.toUser(userDto, generateID());
         if (USERS.contains(UserMapper.toUser(userDto, null))) {
             throw new ValidationException("Пользователь с email = " + userDto.getEmail() + " уже существует!");
         }
-        USERS.add(newUser);
+        USERS.add(user);
 
-        return newUser;
+        return UserMapper.toUserDto(user);
     }
 
     @Override
-    public User updateUser(Long userId, User user) {
-        if (user.getEmail() != null && USERS.contains(user)) {
-            throw new ValidationException("Пользователь с email = " + user.getEmail() + " уже существует!");
+    public UserDto updateUser(Long userId, UserDto userDto) {
+        if (userDto.getEmail() != null && USERS.contains(UserMapper.toUser(userDto, userId))) {
+            throw new ValidationException("Пользователь с email = " + userDto.getEmail() + " уже существует!");
         }
         Optional<User> userOptional = USERS.stream()
                 .filter(userInList -> userInList.getId().equals(userId))
@@ -40,10 +40,10 @@ public class UserRepositoryImpl implements UserRepository {
             throw new NotFoundException("Пользователь с ID = " + userId + " не найден!");
         }
         User userToUpdate = userOptional.get();
-        userToUpdate.setEmail(user.getEmail() != null ? user.getEmail() : null);
-        userToUpdate.setName(user.getName() != null ? user.getName() : null);
+        userToUpdate.setEmail(userDto.getEmail() != null ? userDto.getEmail() : null);
+        userToUpdate.setName(userDto.getName() != null ? userDto.getName() : null);
 
-        return userToUpdate;
+        return UserMapper.toUserDto(userToUpdate);
     }
 
     @Override
@@ -54,20 +54,22 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public User getUserById(Long userId) {
+    public UserDto getUserById(Long userId) {
         Optional<User> userToFind = USERS.stream()
                 .filter(user -> Objects.equals(user.getId(), userId))
                 .findFirst();
         if (userToFind.isEmpty()) {
             throw new NotFoundException("Пользователь с ID = " + userId + " не найден!");
         }
-        return userToFind.get();
+        return UserMapper.toUserDto(userToFind.get());
     }
 
     @Override
     public UserDto deleteUserById(Long userId) {
-        User user = getUserById(userId);
+        UserDto userDto = getUserById(userId);
+        User user = UserMapper.toUser(userDto, userId);
         USERS.remove(user);
+
         return UserMapper.toUserDto(user);
     }
 

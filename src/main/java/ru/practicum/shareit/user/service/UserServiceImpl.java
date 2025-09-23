@@ -2,7 +2,6 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -14,13 +13,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
     @Override
-    public User createUser(UserDto userDto) {
+    public UserDto createUser(UserDto userDto) {
         return repository.createUser(userDto);
     }
 
     @Override
-    public User updateUser(Long userId, User user) {
-        return repository.updateUser(userId, user);
+    public UserDto updateUser(Long userId, UserDto userDto) {
+        return repository.updateUser(userId, userDto);
     }
 
     @Override
@@ -29,7 +28,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Long userId) {
+    public UserDto getUserById(Long userId) {
         return repository.getUserById(userId);
     }
 

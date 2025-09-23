@@ -7,7 +7,8 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.*;
@@ -20,29 +21,31 @@ public class ItemRepositoryImpl implements ItemRepository {
     private final UserRepository userRepository;
 
     @Override
-    public Item addItem(Long userId, ItemDto itemDto) {
+    public ItemDto addItem(Long userId, ItemDto itemDto) {
         if (userId == null) {
             throw new ValidationException("В заголовке не передан ID владельца вещи!");
         }
-        User owner = userRepository.getUserById(userId);
-        Item newItem = ItemMapper.toItem(itemDto, owner, generateID());
+        UserDto ownerDto = userRepository.getUserById(userId);
+        Item newItem = ItemMapper.toItem(itemDto, UserMapper.toUser(ownerDto, userId), generateID());
         ITEMS.add(newItem);
 
-        return newItem;
+        return ItemMapper.toItemDto(newItem);
     }
 
     @Override
-    public Item updateItem(Long userId, Long itemId, ItemDto itemDto) {
-        User owner = userRepository.getUserById(userId);
+    public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
+        userRepository.getUserById(userId);
         Item item = getItemById(itemId);
+
         if (!userId.equals(item.getOwner().getId())) {
             throw new ValidationException("Изменять описание вещи может только её владелец!");
         }
+
         item.setName(itemDto.getName());
         item.setDescription(itemDto.getDescription());
         item.setAvailable(itemDto.getAvailable());
 
-        return item;
+        return ItemMapper.toItemDto(item);
     }
 
     @Override
@@ -50,6 +53,7 @@ public class ItemRepositoryImpl implements ItemRepository {
         Optional<Item> itemToFind = ITEMS.stream()
                 .filter(item -> Objects.equals(item.getId(), itemId))
                 .findFirst();
+
         if (itemToFind.isEmpty()) {
             throw new NotFoundException("Вещь с ID = " + itemId + " не найдена!");
         }
@@ -70,9 +74,9 @@ public class ItemRepositoryImpl implements ItemRepository {
         if ((text == null) || (text.isBlank())) {
             return Collections.emptyList();
         }
-
+        String upperCaseText = text.toUpperCase();
         return ITEMS.stream()
-                .filter(item -> ((item.getName() != null) && (item.getName().toUpperCase().contains(text.toUpperCase()))
+                .filter(item -> ((item.getName() != null) && (item.getName().toUpperCase().contains(upperCaseText))
                         || (item.getDescription() != null) && (item.getDescription().toUpperCase().contains(text.toUpperCase()))))
                 .filter(Item::getAvailable)
                 .map(ItemMapper::toItemDto)
