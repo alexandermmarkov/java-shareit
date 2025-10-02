@@ -15,15 +15,15 @@ public class BookingDto {
     private Long id;
 
     @NotNull(message = "Дата начала бронирования не может быть пустой")
-    //@FutureOrPresent(message = "Дата начала не может быть в прошлом")
     private LocalDateTime start;
 
     @NotNull(message = "Дата окончания бронирования не может быть пустой")
-    //@Future(message = "Дата окончания должна быть в будущем")
     private LocalDateTime end;
 
     @NotNull(message = "Ссылка на бронируемую вещь не может быть пустой")
     private Long itemId;
+
+    private Long bookerId;
 
     private BookingStatus status;
 }

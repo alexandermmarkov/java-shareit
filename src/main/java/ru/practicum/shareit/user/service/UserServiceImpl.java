@@ -18,13 +18,14 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository repository;
+    private final UserMapper userMapper;
 
     @Override
     public UserDto createUser(UserDto userDto) {
         log.debug("createUser(userDto={})", userDto);
 
-        User user = repository.save(UserMapper.toUser(userDto));
-        return UserMapper.toUserDto(user);
+        User user = repository.save(userMapper.toUser(userDto));
+        return userMapper.toUserDto(user);
     }
 
     @Override
@@ -33,8 +34,8 @@ public class UserServiceImpl implements UserService {
         getUserById(userId);
 
         userDto.setId(userId);
-        User user = repository.save(UserMapper.toUser(userDto));
-        return UserMapper.toUserDto(user);
+        User user = repository.save(userMapper.toUser(userDto));
+        return userMapper.toUserDto(user);
     }
 
     @Override
@@ -44,7 +45,7 @@ public class UserServiceImpl implements UserService {
 
         return repository.findAll()
                 .stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto)
                 .toList();
     }
 
@@ -58,7 +59,7 @@ public class UserServiceImpl implements UserService {
             return new NotFoundException("Пользователь с ID = '" + userId + "' не найден");
         });
 
-        return UserMapper.toUserDto(user);
+        return userMapper.toUserDto(user);
     }
 
     @Override

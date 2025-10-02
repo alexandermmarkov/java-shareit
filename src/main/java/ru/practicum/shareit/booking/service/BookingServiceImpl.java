@@ -21,6 +21,7 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +33,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository repository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
+    private final BookingMapper bookingMapper;
 
     @Override
     @Transactional
@@ -48,9 +50,10 @@ public class BookingServiceImpl implements BookingService {
                     + bookingDto.getItemId() + "' на данный момент недоступна для брони");
         }
         bookingDto.setStatus(BookingStatus.WAITING);
-        Booking booking = repository.save(BookingMapper.toBooking(bookingDto, user, item));
+        bookingDto.setBookerId(userId);
+        Booking booking = repository.save(bookingMapper.toBooking(bookingDto, user, item));
 
-        return BookingMapper.toBookingResponseDto(booking);
+        return bookingMapper.toBookingResponseDto(booking);
     }
 
     @Override
@@ -68,7 +71,7 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
 
-        return BookingMapper.toBookingResponseDto(repository.save(booking));
+        return bookingMapper.toBookingResponseDto(repository.save(booking));
     }
 
     @Override
@@ -87,7 +90,7 @@ public class BookingServiceImpl implements BookingService {
                     "не является владельцем или автором бронирования вещи с ID='" + booking.getItem().getId() + "'");
         }
 
-        return BookingMapper.toBookingResponseDto(booking);
+        return bookingMapper.toBookingResponseDto(booking);
     }
 
     @Override
@@ -116,7 +119,10 @@ public class BookingServiceImpl implements BookingService {
         };
 
         Iterable<Booking> foundBookings = repository.findAll(byUserIdAndState);
-        return BookingMapper.toBookingResponseDtos(foundBookings);
+        List<Booking> foundBookingsList = new ArrayList<>();
+        foundBookings.forEach(foundBookingsList::add);
+
+        return bookingMapper.toBookingResponseDtoList(foundBookingsList);
     }
 
     @Override
@@ -150,7 +156,10 @@ public class BookingServiceImpl implements BookingService {
         };
 
         Iterable<Booking> foundBookings = repository.findAll(byOwnerIdAndState);
-        return BookingMapper.toBookingResponseDtos(foundBookings);
+        List<Booking> foundBookingsList = new ArrayList<>();
+        foundBookings.forEach(foundBookingsList::add);
+
+        return bookingMapper.toBookingResponseDtoList(foundBookingsList);
     }
 
     public User getUserIfExists(Long userId) {
