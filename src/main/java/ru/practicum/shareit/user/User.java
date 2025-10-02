@@ -1,18 +1,23 @@
 package ru.practicum.shareit.user;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
-@NoArgsConstructor
-@EqualsAndHashCode(of = {"email"})
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@ToString
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column
     private String name;
-    @NotBlank(message = "Электронная почта не может быть пустой")
-    @Email(message = "Некорректный формат электронной почты")
+
+    @Column(nullable = false, unique = true)
     private String email;
 }

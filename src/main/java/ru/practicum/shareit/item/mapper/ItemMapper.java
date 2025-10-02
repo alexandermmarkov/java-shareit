@@ -1,32 +1,48 @@
 package ru.practicum.shareit.item.mapper;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithDateDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.mapper.UserMapper;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ItemMapper {
-    public static ItemDto toItemDto(Item item) {
-        return new ItemDto(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable(),
-                item.getRequest() != null ? item.getRequest().getId() : null
-        );
-    }
+import java.time.LocalDateTime;
+import java.util.List;
 
-    public static Item toItem(ItemDto itemDto, User owner, Long itemId) {
-        Item item = new Item();
-        item.setId(itemId);
-        item.setName(itemDto.getName());
-        item.setDescription(itemDto.getDescription());
-        item.setAvailable(itemDto.getAvailable());
-        item.setOwner(owner);
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
+public interface ItemMapper {
 
-        return item;
-    }
+    ItemMapper INSTANCE = Mappers.getMapper(ItemMapper.class);
 
+    @Mapping(target = "id", source = "item.id")
+    @Mapping(target = "name", source = "item.name")
+    @Mapping(target = "description", source = "item.description")
+    @Mapping(target = "available", source = "item.available")
+    @Mapping(target = "requestId", expression = "java(item.getRequest() != null ? item.getRequest().getId() : null)")
+    @Mapping(target = "lastBooking", source = "lastBooking")
+    @Mapping(target = "nextBooking", source = "nextBooking")
+    @Mapping(target = "comments", source = "comments")
+    ItemWithDateDto toItemWithDateDto(Item item, List<CommentDto> comments,
+                                      LocalDateTime lastBooking, LocalDateTime nextBooking);
+
+    @Mapping(target = "id", source = "item.id")
+    @Mapping(target = "name", source = "item.name")
+    @Mapping(target = "description", source = "item.description")
+    @Mapping(target = "available", source = "item.available")
+    @Mapping(target = "owner", source = "item.owner")
+    @Mapping(target = "requestId", expression = "java(item.getRequest() != null ? item.getRequest().getId() : null)")
+    ItemDto toItemDto(Item item);
+
+    @Mapping(target = "id", source = "itemDto.id")
+    @Mapping(target = "name", source = "itemDto.name")
+    @Mapping(target = "description", source = "itemDto.description")
+    @Mapping(target = "available", source = "itemDto.available")
+    @Mapping(target = "owner", source = "owner")
+    @Mapping(target = "request", ignore = true)
+        // Обрабатывается отдельно
+    Item toItem(ItemDto itemDto, User owner);
 }

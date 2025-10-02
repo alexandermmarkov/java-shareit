@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(@Validated @RequestBody UserDto userDto) {
+    public UserDto createUser(@Valid @RequestBody UserDto userDto) {
         return userService.createUser(userDto);
     }
 
@@ -39,7 +40,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public UserDto deleteUserById(@PathVariable("userId") @Positive Long userId) {
-        return userService.deleteUserById(userId);
+    public void deleteUserById(@PathVariable("userId") @Positive Long userId) {
+        userService.deleteUserById(userId);
     }
 }
