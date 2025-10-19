@@ -40,7 +40,7 @@ class BookingClientTest {
 
         try {
             bookingClient.addBooking(userId, bookingDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -64,7 +64,7 @@ class BookingClientTest {
 
         try {
             bookingClient.finalizeBooking(userId, bookingId, approved);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -88,7 +88,7 @@ class BookingClientTest {
 
         try {
             bookingClient.getBookingById(userId, bookingId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -110,7 +110,7 @@ class BookingClientTest {
 
         try {
             bookingClient.getBookings(userId, state);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -133,7 +133,7 @@ class BookingClientTest {
 
         try {
             bookingClient.getBookingsByOwner(userId, state);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -156,7 +156,7 @@ class BookingClientTest {
 
         try {
             bookingClient.getBookings(userId, state);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -176,7 +176,7 @@ class BookingClientTest {
 
         try {
             bookingClient.getBookingsByOwner(userId, state);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -197,7 +197,7 @@ class BookingClientTest {
 
         try {
             bookingClient.finalizeBooking(userId, bookingId, approved);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 

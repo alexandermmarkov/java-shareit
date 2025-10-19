@@ -43,7 +43,7 @@ class ItemRequestClientTest {
 
         try {
             itemRequestClient.addItemRequest(userId, itemRequestDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -65,7 +65,7 @@ class ItemRequestClientTest {
 
         try {
             itemRequestClient.getItemRequests(userId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -86,7 +86,7 @@ class ItemRequestClientTest {
 
         try {
             itemRequestClient.getAllItemRequests(userId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -108,7 +108,7 @@ class ItemRequestClientTest {
 
         try {
             itemRequestClient.getItemRequestById(userId, requestId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 

@@ -42,7 +42,7 @@ class UserClientTest {
 
         try {
             userClient.createUser(userDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -64,7 +64,7 @@ class UserClientTest {
 
         try {
             userClient.updateUser(userId, userDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -83,7 +83,7 @@ class UserClientTest {
     void getUsersShouldCallGetWithCorrectParameters() {
         try {
             userClient.getUsers();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -101,7 +101,7 @@ class UserClientTest {
 
         try {
             userClient.getUserById(userId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -119,7 +119,7 @@ class UserClientTest {
 
         try {
             userClient.deleteUserById(userId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 

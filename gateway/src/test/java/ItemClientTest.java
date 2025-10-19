@@ -45,7 +45,7 @@ class ItemClientTest {
 
         try {
             itemClient.addItem(userId, itemDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -69,7 +69,7 @@ class ItemClientTest {
 
         try {
             itemClient.updateItem(userId, itemId, itemDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -92,7 +92,7 @@ class ItemClientTest {
 
         try {
             itemClient.getItemWithDateById(userId, itemId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -113,7 +113,7 @@ class ItemClientTest {
 
         try {
             itemClient.getItems(userId);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -135,7 +135,7 @@ class ItemClientTest {
 
         try {
             itemClient.searchItem(userId, text);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -158,7 +158,7 @@ class ItemClientTest {
 
         try {
             itemClient.searchItem(userId, text);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -179,7 +179,7 @@ class ItemClientTest {
 
         try {
             itemClient.addComment(userId, itemId, commentDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -321,7 +321,7 @@ class ItemClientTest {
 
         try {
             itemClient.searchItem(userId, text);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -342,7 +342,7 @@ class ItemClientTest {
 
         try {
             itemClient.addComment(userId, itemId, commentDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
@@ -365,7 +365,7 @@ class ItemClientTest {
 
         try {
             itemClient.updateItem(userId, itemId, itemDto);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 
