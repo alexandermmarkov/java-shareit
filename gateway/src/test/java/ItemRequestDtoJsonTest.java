@@ -43,18 +43,16 @@ class ItemRequestDtoJsonTest {
 
     @Test
     void testItemRequestDtoDeserialization() throws Exception {
-        String content = """
-                {
-                    "id": 200,
-                    "description": "Need a ladder for painting work",
-                    "requestor": {
-                        "id": 2,
-                        "name": "Jane Smith",
-                        "email": "jane@example.com"
-                    },
-                    "created": "2024-01-03T09:15:00"
-                }
-                """;
+        String content = "{" +
+                "\"id\": 200," +
+                "\"description\": \"Need a ladder for painting work\"," +
+                "\"requestor\": {" +
+                "    \"id\": 2," +
+                "    \"name\": \"Jane Smith\"," +
+                "    \"email\": \"jane@example.com\"" +
+                "}," +
+                "\"created\": \"2024-01-03T09:15:00\"" +
+                "}";
 
         ItemRequestDto itemRequestDto = json.parseObject(content);
 

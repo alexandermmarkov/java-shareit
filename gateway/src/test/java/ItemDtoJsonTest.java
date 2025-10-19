@@ -44,20 +44,18 @@ class ItemDtoJsonTest {
 
     @Test
     void testItemDtoDeserialization() throws Exception {
-        String content = """
-                {
-                    "id": 200,
-                    "name": "Saw",
-                    "description": "Circular saw",
-                    "owner": {
-                        "id": 2,
-                        "name": "Jane Smith",
-                        "email": "jane@example.com"
-                    },
-                    "available": false,
-                    "requestId": 1
-                }
-                """;
+        String content = "{" +
+                "\"id\": 200," +
+                "\"name\": \"Saw\"," +
+                "\"description\": \"Circular saw\"," +
+                "\"owner\": {" +
+                "    \"id\": 2," +
+                "    \"name\": \"Jane Smith\"," +
+                "    \"email\": \"jane@example.com\"" +
+                "}," +
+                "\"available\": false," +
+                "\"requestId\": 1" +
+                "}";
 
         ItemDto itemDto = json.parseObject(content);
 

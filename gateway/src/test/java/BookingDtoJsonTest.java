@@ -44,16 +44,14 @@ class BookingDtoJsonTest {
 
     @Test
     void testBookingDtoDeserialization() throws Exception {
-        String content = """
-                {
-                    "id": 1,
-                    "start": "2024-01-01T10:00:00",
-                    "end": "2024-01-02T10:00:00",
-                    "itemId": 100,
-                    "bookerId": 200,
-                    "status": "APPROVED"
-                }
-                """;
+        String content = "{" +
+                "\"id\": 1," +
+                "\"start\": \"2024-01-01T10:00:00\"," +
+                "\"end\": \"2024-01-02T10:00:00\"," +
+                "\"itemId\": 100," +
+                "\"bookerId\": 200," +
+                "\"status\": \"APPROVED\"" +
+                "}";
 
         BookingDto bookingDto = json.parseObject(content);
 
