@@ -408,4 +408,265 @@ class ItemControllerValidationTest {
 
         Mockito.verify(itemClient, times(1)).addComment(1L, 1L, validDto);
     }
+
+    @Test
+    void addItemShouldCallClient() throws Exception {
+        ItemDto requestDto = new ItemDto(null, "Drill", "Powerful drill", null, true, null);
+        ItemDto responseDto = new ItemDto(1L, "Drill", "Powerful drill", null, true, null);
+
+        Mockito.when(itemClient.addItem(anyLong(), any(ItemDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/items")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Drill"))
+                .andExpect(jsonPath("$.description").value("Powerful drill"))
+                .andExpect(jsonPath("$.available").value(true));
+
+        Mockito.verify(itemClient, times(1)).addItem(eq(1L), any(ItemDto.class));
+    }
+
+    @Test
+    void updateItemShouldCallClient() throws Exception {
+        ItemDto requestDto = new ItemDto(null, "Updated Drill", "Very powerful drill", null, false, null);
+        ItemDto responseDto = new ItemDto(1L, "Updated Drill", "Very powerful drill", null, false, null);
+
+        Mockito.when(itemClient.updateItem(anyLong(), anyLong(), any(ItemDto.class)))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Updated Drill"))
+                .andExpect(jsonPath("$.available").value(false));
+
+        Mockito.verify(itemClient, times(1)).updateItem(1L, 1L, requestDto);
+    }
+
+    @Test
+    void getItemWithDateByIdShouldCallClient() throws Exception {
+        ItemDto responseDto = new ItemDto(1L, "Drill", "Powerful drill", null, true, null);
+
+        Mockito.when(itemClient.getItemWithDateById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(get("/items/1")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("Drill"))
+                .andExpect(jsonPath("$.available").value(true));
+
+        Mockito.verify(itemClient, times(1)).getItemWithDateById(1L, 1L);
+    }
+
+    @Test
+    void getItemsShouldCallClient() throws Exception {
+        ItemDto item1 = new ItemDto(1L, "Drill", "Powerful drill", null, true, null);
+        ItemDto item2 = new ItemDto(2L, "Hammer", "Good hammer", null, true, null);
+        List<ItemDto> responseList = List.of(item1, item2);
+
+        Mockito.when(itemClient.getItems(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Drill"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].name").value("Hammer"));
+
+        Mockito.verify(itemClient, times(1)).getItems(1L);
+    }
+
+    @Test
+    void getItemsEmptyResultShouldReturnEmptyList() throws Exception {
+        List<ItemDto> responseList = List.of();
+
+        Mockito.when(itemClient.getItems(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(itemClient, times(1)).getItems(1L);
+    }
+
+    @Test
+    void searchItemsShouldCallClient() throws Exception {
+        ItemDto item1 = new ItemDto(1L, "Power Drill", "Very powerful", null, true, null);
+        List<ItemDto> responseList = List.of(item1);
+
+        Mockito.when(itemClient.searchItem(anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items/search")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("text", "drill"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Power Drill"));
+
+        Mockito.verify(itemClient, times(1)).searchItem(1L, "drill");
+    }
+
+    @Test
+    void searchItemsEmptyResultShouldReturnEmptyList() throws Exception {
+        List<ItemDto> responseList = List.of();
+
+        Mockito.when(itemClient.searchItem(anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items/search")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("text", "nonexistent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(itemClient, times(1)).searchItem(1L, "nonexistent");
+    }
+
+    @Test
+    void addComment_ShouldCallClient() throws Exception {
+        CommentDto requestDto = new CommentDto(null, "Great item!", null, null);
+        CommentDto responseDto = new CommentDto(1L, "Great item!", "John Doe", LocalDateTime.now());
+
+        Mockito.when(itemClient.addComment(anyLong(), anyLong(), any(CommentDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.text").value("Great item!"))
+                .andExpect(jsonPath("$.authorName").value("John Doe"));
+
+        Mockito.verify(itemClient, times(1)).addComment(1L, 1L, requestDto);
+    }
+
+    @Test
+    void updateItem_PartialUpdate_ShouldCallClient() throws Exception {
+        ItemDto requestDto = new ItemDto(null, "New Name", null, null, null, null);
+        ItemDto responseDto = new ItemDto(1L, "New Name", "Original Description", null, true, null);
+
+        Mockito.when(itemClient.updateItem(anyLong(), anyLong(), any(ItemDto.class)))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("New Name"))
+                .andExpect(jsonPath("$.description").value("Original Description"));
+
+        Mockito.verify(itemClient, times(1)).updateItem(1L, 1L, requestDto);
+    }
+
+    @Test
+    void getItems_WithPagination_ShouldCallClient() throws Exception {
+        ItemDto item1 = new ItemDto(1L, "Drill", "Powerful drill", null, true, null);
+        ItemDto item2 = new ItemDto(2L, "Hammer", "Good hammer", null, true, null);
+        List<ItemDto> responseList = List.of(item1, item2);
+
+        Mockito.when(itemClient.getItems(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("from", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        Mockito.verify(itemClient, times(1)).getItems(1L);
+    }
+
+    @Test
+    void searchItemsWithPaginationShouldCallClient() throws Exception {
+        ItemDto item1 = new ItemDto(1L, "Power Drill", "Very powerful", null, true, null);
+        List<ItemDto> responseList = List.of(item1);
+
+        Mockito.when(itemClient.searchItem(anyLong(), anyString()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/items/search")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("text", "drill")
+                        .param("from", "5")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        Mockito.verify(itemClient, times(1)).searchItem(1L, "drill");
+    }
+
+    @Test
+    void addItem_WithRequestShouldCallClient() throws Exception {
+        ItemDto requestDto = new ItemDto(null, "Drill", "Powerful drill", null, true, 100L);
+        ItemDto responseDto = new ItemDto(1L, "Drill", "Powerful drill", null, true, 100L);
+
+        Mockito.when(itemClient.addItem(anyLong(), any(ItemDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/items")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.requestId").value(100L));
+
+        Mockito.verify(itemClient, times(1)).addItem(eq(1L), any(ItemDto.class));
+    }
+
+    @Test
+    void getItemWithDateByIdForDifferentUserShouldCallClient() throws Exception {
+        ItemDto responseDto = new ItemDto(1L, "Drill", "Powerful drill", null, true, null);
+
+        Mockito.when(itemClient.getItemWithDateById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(get("/items/1")
+                        .header("X-Sharer-User-Id", 999L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
+
+        Mockito.verify(itemClient, times(1)).getItemWithDateById(999L, 1L);
+    }
+
+    @Test
+    void addCommentWithMaxLengthTextShouldCallClient() throws Exception {
+        String maxLengthText = "a".repeat(2000);
+        CommentDto requestDto = new CommentDto(null, maxLengthText, null, null);
+        CommentDto responseDto = new CommentDto(1L, maxLengthText, "John Doe", LocalDateTime.now());
+
+        Mockito.when(itemClient.addComment(anyLong(), anyLong(), any(CommentDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated());
+
+        Mockito.verify(itemClient, times(1)).addComment(1L, 1L, requestDto);
+    }
 }

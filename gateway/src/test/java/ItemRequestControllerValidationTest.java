@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -346,5 +346,309 @@ class ItemRequestControllerValidationTest {
                 .andExpect(jsonPath("$.requestor.email").value("john@example.com"));
 
         Mockito.verify(itemRequestClient, times(1)).addItemRequest(1L, validDto);
+    }
+
+    @Test
+    void addItemRequestWithBlankDescriptionShouldReturnBadRequest() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto(null, "   ", null, null);
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).addItemRequest(anyLong(), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void addItemRequestWithNullDescriptionShouldReturnBadRequest() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto(null, null, null, null);
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).addItemRequest(anyLong(), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void addItemRequestWithLongDescriptionShouldReturnBadRequest() throws Exception {
+        String longDescription = "a".repeat(2001);
+        ItemRequestDto requestDto = new ItemRequestDto(null, longDescription, null, null);
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).addItemRequest(anyLong(), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void addItemRequestWithMaxLengthDescriptionShouldCallClient() throws Exception {
+        String maxLengthDescription = "a".repeat(2000);
+        ItemRequestDto requestDto = new ItemRequestDto(null, maxLengthDescription, null, null);
+        ItemRequestDto responseDto = new ItemRequestDto(1L, maxLengthDescription, null, LocalDateTime.now());
+
+        Mockito.when(itemRequestClient.addItemRequest(anyLong(), any(ItemRequestDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.description").value(maxLengthDescription));
+
+        Mockito.verify(itemRequestClient, times(1)).addItemRequest(eq(1L), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void addItemRequestWithInvalidUserIdShouldReturnBadRequest() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto(null, "Need a drill", null, null);
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 0L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).addItemRequest(anyLong(), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void addItemRequestWithNegativeUserIdShouldReturnBadRequest() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto(null, "Need a drill", null, null);
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", -1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).addItemRequest(anyLong(), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void getItemRequestsShouldCallClient() throws Exception {
+        UserDto requestor = new UserDto(1L, "John Doe", "john@example.com");
+        ItemRequestDto request1 = new ItemRequestDto(1L, "Need a drill", requestor, LocalDateTime.now().minusDays(1));
+        ItemRequestDto request2 = new ItemRequestDto(2L, "Need a hammer", requestor, LocalDateTime.now());
+        List<ItemRequestDto> responseList = List.of(request1, request2);
+
+        Mockito.when(itemRequestClient.getItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].description").value("Need a drill"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].description").value("Need a hammer"));
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequests(1L);
+    }
+
+    @Test
+    void getItemRequestsEmptyResultShouldReturnEmptyList() throws Exception {
+        List<ItemRequestDto> responseList = List.of();
+
+        Mockito.when(itemRequestClient.getItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequests(1L);
+    }
+
+    @Test
+    void getItemRequestsWithInvalidUserIdShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", 0L))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).getItemRequests(anyLong());
+    }
+
+    @Test
+    void getAllItemRequestsShouldCallClient() throws Exception {
+        UserDto requestor1 = new UserDto(1L, "John Doe", "john@example.com");
+        UserDto requestor2 = new UserDto(2L, "Jane Smith", "jane@example.com");
+        ItemRequestDto request1 = new ItemRequestDto(1L, "Need a drill", requestor1, LocalDateTime.now().minusDays(1));
+        ItemRequestDto request2 = new ItemRequestDto(2L, "Need a hammer", requestor2, LocalDateTime.now());
+        List<ItemRequestDto> responseList = List.of(request1, request2);
+
+        Mockito.when(itemRequestClient.getAllItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].description").value("Need a drill"))
+                .andExpect(jsonPath("$[0].requestor.id").value(1L))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].requestor.id").value(2L));
+
+        Mockito.verify(itemRequestClient, times(1)).getAllItemRequests(1L);
+    }
+
+    @Test
+    void getAllItemRequestsEmptyResultShouldReturnEmptyList() throws Exception {
+        List<ItemRequestDto> responseList = List.of();
+
+        Mockito.when(itemRequestClient.getAllItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(itemRequestClient, times(1)).getAllItemRequests(1L);
+    }
+
+    @Test
+    void getAllItemRequestsWithInvalidUserIdShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 0L))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).getAllItemRequests(anyLong());
+    }
+
+    @Test
+    void getItemRequestByIdShouldCallClient() throws Exception {
+        UserDto requestor = new UserDto(1L, "John Doe", "john@example.com");
+        ItemRequestDto responseDto = new ItemRequestDto(1L, "Need a power drill", requestor, LocalDateTime.now());
+
+        Mockito.when(itemRequestClient.getItemRequestById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(get("/requests/1")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.description").value("Need a power drill"))
+                .andExpect(jsonPath("$.requestor.id").value(1L))
+                .andExpect(jsonPath("$.requestor.name").value("John Doe"));
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequestById(1L, 1L);
+    }
+
+    @Test
+    void getItemRequestByIdWithInvalidUserIdShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/requests/1")
+                        .header("X-Sharer-User-Id", 0L))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).getItemRequestById(anyLong(), anyLong());
+    }
+
+    @Test
+    void getItemRequestByIdWithInvalidRequestIdShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/requests/0")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).getItemRequestById(anyLong(), anyLong());
+    }
+
+    @Test
+    void getItemRequestByIdWithNegativeRequestIdShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/requests/-1")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isBadRequest());
+
+        Mockito.verify(itemRequestClient, never()).getItemRequestById(anyLong(), anyLong());
+    }
+
+    @Test
+    void getItemRequestByIdNotFoundShouldReturnClientResponse() throws Exception {
+        Mockito.when(itemRequestClient.getItemRequestById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+        mockMvc.perform(get("/requests/999")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isNotFound());
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequestById(1L, 999L);
+    }
+
+    @Test
+    void addItemRequestWithExistingIdShouldCallClient() throws Exception {
+        UserDto requestor = new UserDto(1L, "John Doe", "john@example.com");
+        ItemRequestDto requestDto = new ItemRequestDto(999L, "Need a drill", null, null);
+        ItemRequestDto responseDto = new ItemRequestDto(999L, "Need a drill", requestor, LocalDateTime.now());
+
+        Mockito.when(itemRequestClient.addItemRequest(anyLong(), any(ItemRequestDto.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(responseDto));
+
+        mockMvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(999L));
+
+        Mockito.verify(itemRequestClient, times(1)).addItemRequest(eq(1L), any(ItemRequestDto.class));
+    }
+
+    @Test
+    void getItemRequestsWithDifferentUserShouldCallClient() throws Exception {
+        List<ItemRequestDto> responseList = List.of();
+
+        Mockito.when(itemRequestClient.getItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", 999L))
+                .andExpect(status().isOk());
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequests(999L);
+    }
+
+    @Test
+    void getAllItemRequestsWithDifferentUserShouldCallClient() throws Exception {
+        List<ItemRequestDto> responseList = List.of();
+
+        Mockito.when(itemRequestClient.getAllItemRequests(anyLong()))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/requests/all")
+                        .header("X-Sharer-User-Id", 999L))
+                .andExpect(status().isOk());
+
+        Mockito.verify(itemRequestClient, times(1)).getAllItemRequests(999L);
+    }
+
+    @Test
+    void getItemRequestByIdWithDifferentIdsShouldCallClient() throws Exception {
+        UserDto requestor = new UserDto(1L, "John Doe", "john@example.com");
+        ItemRequestDto responseDto = new ItemRequestDto(5L, "Test request", requestor, LocalDateTime.now());
+
+        Mockito.when(itemRequestClient.getItemRequestById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(get("/requests/5")
+                        .header("X-Sharer-User-Id", 10L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5L));
+
+        Mockito.verify(itemRequestClient, times(1)).getItemRequestById(10L, 5L);
     }
 }

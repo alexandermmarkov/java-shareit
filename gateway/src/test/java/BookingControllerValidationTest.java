@@ -331,4 +331,267 @@ class BookingControllerValidationTest {
                         .param("approved", "true"))
                 .andExpect(status().isInternalServerError());
     }
+
+    @Test
+    void addBookingShouldCallClient() throws Exception {
+        BookingDto requestDto = new BookingDto(null, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, null, null);
+        BookingDto responseDto = new BookingDto(1L, requestDto.getStart(), requestDto.getEnd(),
+                1L, 1L, BookingStatus.WAITING);
+
+        Mockito.when(bookingClient.addBooking(anyLong(), any(BookingDto.class)))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.status").value("WAITING"))
+                .andExpect(jsonPath("$.itemId").value(1L))
+                .andExpect(jsonPath("$.bookerId").value(1L));
+
+        Mockito.verify(bookingClient, times(1)).addBooking(eq(1L), any(BookingDto.class));
+    }
+
+    @Test
+    void finalizeBookingShouldCallClient() throws Exception {
+        BookingDto responseDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.APPROVED);
+
+        Mockito.when(bookingClient.finalizeBooking(anyLong(), anyLong(), anyBoolean()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("approved", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.status").value("APPROVED"));
+
+        Mockito.verify(bookingClient, times(1)).finalizeBooking(1L, 1L, true);
+    }
+
+    @Test
+    void finalizeBookingRejectShouldCallClient() throws Exception {
+        BookingDto responseDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.REJECTED);
+
+        Mockito.when(bookingClient.finalizeBooking(anyLong(), anyLong(), anyBoolean()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(patch("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("approved", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        Mockito.verify(bookingClient, times(1)).finalizeBooking(1L, 1L, false);
+    }
+
+    @Test
+    void getBookingByIdShouldCallClient() throws Exception {
+        BookingDto responseDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.APPROVED);
+
+        Mockito.when(bookingClient.getBookingById(anyLong(), anyLong()))
+                .thenReturn(ResponseEntity.ok(responseDto));
+
+        mockMvc.perform(get("/bookings/1")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.itemId").value(1L))
+                .andExpect(jsonPath("$.bookerId").value(1L));
+
+        Mockito.verify(bookingClient, times(1)).getBookingById(1L, 1L);
+    }
+
+    @Test
+    void getBookingsShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.WAITING);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        Mockito.when(bookingClient.getBookings(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].status").value("WAITING"));
+
+        Mockito.verify(bookingClient, times(1)).getBookings(1L, BookingState.ALL);
+    }
+
+    @Test
+    void getBookingsWithDefaultStateShouldCallClient() throws Exception {
+        List<BookingDto> responseList = List.of();
+
+        Mockito.when(bookingClient.getBookings(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(bookingClient, times(1)).getBookings(1L, BookingState.ALL);
+    }
+
+    @Test
+    void getBookingsWithAllStatesShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.WAITING);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        for (BookingState state : BookingState.values()) {
+            Mockito.when(bookingClient.getBookings(anyLong(), eq(state)))
+                    .thenReturn(ResponseEntity.ok(responseList));
+
+            mockMvc.perform(get("/bookings")
+                            .header("X-Sharer-User-Id", 1L)
+                            .param("state", state.toString()))
+                    .andExpect(status().isOk());
+
+            Mockito.verify(bookingClient, times(1)).getBookings(1L, state);
+            Mockito.reset(bookingClient);
+        }
+    }
+
+    @Test
+    void getBookingsByOwnerShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 2L, BookingStatus.WAITING);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        Mockito.when(bookingClient.getBookingsByOwner(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "WAITING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].status").value("WAITING"))
+                .andExpect(jsonPath("$[0].bookerId").value(2L));
+
+        Mockito.verify(bookingClient, times(1)).getBookingsByOwner(1L, BookingState.WAITING);
+    }
+
+    @Test
+    void getBookingsByOwnerWithDefaultStateShouldCallClient() throws Exception {
+        List<BookingDto> responseList = List.of();
+
+        Mockito.when(bookingClient.getBookingsByOwner(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(bookingClient, times(1)).getBookingsByOwner(1L, BookingState.ALL);
+    }
+
+    @Test
+    void getBookingsByOwnerWithAllStates_ShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.APPROVED);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        for (BookingState state : BookingState.values()) {
+            Mockito.when(bookingClient.getBookingsByOwner(anyLong(), eq(state)))
+                    .thenReturn(ResponseEntity.ok(responseList));
+
+            mockMvc.perform(get("/bookings/owner")
+                            .header("X-Sharer-User-Id", 1L)
+                            .param("state", state.toString()))
+                    .andExpect(status().isOk());
+
+            Mockito.verify(bookingClient, times(1)).getBookingsByOwner(1L, state);
+            Mockito.reset(bookingClient);
+        }
+    }
+
+    @Test
+    void getBookingsWithPaginationShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.WAITING);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        Mockito.when(bookingClient.getBookings(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "ALL")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+
+        Mockito.verify(bookingClient, times(1)).getBookings(1L, BookingState.ALL);
+    }
+
+    @Test
+    void getBookingsByOwnerWithPagination_ShouldCallClient() throws Exception {
+        BookingDto bookingDto = new BookingDto(1L, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2), 1L, 1L, BookingStatus.APPROVED);
+        List<BookingDto> responseList = List.of(bookingDto);
+
+        Mockito.when(bookingClient.getBookingsByOwner(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "CURRENT")
+                        .param("from", "5")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L));
+
+        Mockito.verify(bookingClient, times(1)).getBookingsByOwner(1L, BookingState.CURRENT);
+    }
+
+    @Test
+    void getBookingsEmptyResultShouldReturnEmptyList() throws Exception {
+        List<BookingDto> responseList = List.of();
+
+        Mockito.when(bookingClient.getBookings(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "FUTURE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(bookingClient, times(1)).getBookings(1L, BookingState.FUTURE);
+    }
+
+    @Test
+    void getBookingsByOwnerEmptyResultShouldReturnEmptyList() throws Exception {
+        List<BookingDto> responseList = List.of();
+
+        Mockito.when(bookingClient.getBookingsByOwner(anyLong(), any(BookingState.class)))
+                .thenReturn(ResponseEntity.ok(responseList));
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("state", "PAST"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Mockito.verify(bookingClient, times(1)).getBookingsByOwner(1L, BookingState.PAST);
+    }
 }
