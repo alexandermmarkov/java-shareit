@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = ShareItServer.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class ItemServiceImplTest {
+public class ItemServiceImplTest {
     private final EntityManager em;
     private final ItemService service;
 

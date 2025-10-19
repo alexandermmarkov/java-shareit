@@ -7,6 +7,8 @@ import lombok.ToString;
 import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "items")
 @Getter
@@ -33,4 +35,17 @@ public class Item {
     @OneToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
     private ItemRequest request;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Item item = (Item) o;
+        return Objects.equals(id, item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

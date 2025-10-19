@@ -1,6 +1,5 @@
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,17 +18,18 @@ import ru.practicum.shareit.user.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Transactional
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
         classes = ShareItServer.class)
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
-class BookingServiceImplTest {
-    private final EntityManager em;
-    private final BookingService service;
+public class BookingServiceImplTest {
+    @Autowired
+    private EntityManager em;
+
+    @Autowired
+    private BookingService service;
 
     @Test
     void testAddBooking() {
@@ -55,23 +55,23 @@ class BookingServiceImplTest {
 
         BookingResponseDto result = service.addBooking(booker.getId(), bookingDto);
 
-        assertThat(result.getId(), notNullValue());
-        assertThat(result.getStatus(), equalTo(BookingStatus.WAITING));
-        assertThat(result.getItem().getId(), equalTo(item.getId()));
-        assertThat(result.getBooker().getId(), equalTo(booker.getId()));
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.WAITING);
+        assertThat(result.getItem().getId()).isEqualTo(item.getId());
+        assertThat(result.getBooker().getId()).isEqualTo(booker.getId());
 
         TypedQuery<Booking> query = em.createQuery("SELECT b FROM Booking b WHERE b.id = :id", Booking.class);
         Booking savedBooking = query.setParameter("id", result.getId()).getSingleResult();
 
-        assertThat(savedBooking.getStart(), equalTo(bookingDto.getStart()));
-        assertThat(savedBooking.getEnd(), equalTo(bookingDto.getEnd()));
-        assertThat(savedBooking.getStatus(), equalTo(BookingStatus.WAITING));
-        assertThat(savedBooking.getItem().getId(), equalTo(item.getId()));
-        assertThat(savedBooking.getBooker().getId(), equalTo(booker.getId()));
+        assertThat(savedBooking.getStart()).isEqualTo(bookingDto.getStart());
+        assertThat(savedBooking.getEnd()).isEqualTo(bookingDto.getEnd());
+        assertThat(savedBooking.getStatus()).isEqualTo(BookingStatus.WAITING);
+        assertThat(savedBooking.getItem().getId()).isEqualTo(item.getId());
+        assertThat(savedBooking.getBooker().getId()).isEqualTo(booker.getId());
     }
 
     @Test
-    void testAddBooking_WhenItemNotAvailable_ShouldThrowException() {
+    void testAddBookingWhenItemNotAvailable() {
         User owner = makeUser("owner2@email.com", "Owner2", "User");
         em.persist(owner);
 
@@ -96,7 +96,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void testAddBooking_WhenItemNotFound_ShouldThrowException() {
+    void testAddBookingWhenItemNotFound() {
         User booker = makeUser("booker3@email.com", "Booker3", "User");
         em.persist(booker);
         em.flush();
@@ -114,7 +114,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void testAddBooking_WhenUserNotFound_ShouldThrowException() {
+    void testAddBookingWhenUserNotFound() {
         User owner = makeUser("owner4@email.com", "Owner4", "User");
         em.persist(owner);
 
@@ -136,7 +136,28 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void testFinalizeBooking_Approve() {
+    void testAddBookingWhenBookingOwnItem() {
+        User owner = makeUser("owner_own@email.com", "Owner", "Own");
+        em.persist(owner);
+
+        Item item = makeItem("Own Item", "Description", owner, true);
+        em.persist(item);
+        em.flush();
+
+        BookingDto bookingDto = makeBookingDto(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2),
+                item.getId(),
+                null,
+                null,
+                null
+        );
+
+        assertThrows(ValidationException.class, () -> service.addBooking(owner.getId(), bookingDto));
+    }
+
+    @Test
+    void testFinalizeBookingApprove() {
         User owner = makeUser("owner5@email.com", "Owner5", "User");
         em.persist(owner);
 
@@ -159,16 +180,16 @@ class BookingServiceImplTest {
 
         BookingResponseDto result = service.finalizeBooking(owner.getId(), booking.getId(), true);
 
-        assertThat(result.getStatus(), equalTo(BookingStatus.APPROVED));
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.APPROVED);
 
         TypedQuery<Booking> query = em.createQuery("SELECT b FROM Booking b WHERE b.id = :id", Booking.class);
         Booking updatedBooking = query.setParameter("id", booking.getId()).getSingleResult();
 
-        assertThat(updatedBooking.getStatus(), equalTo(BookingStatus.APPROVED));
+        assertThat(updatedBooking.getStatus()).isEqualTo(BookingStatus.APPROVED);
     }
 
     @Test
-    void testFinalizeBooking_Reject() {
+    void testFinalizeBookingReject() {
         User owner = makeUser("owner6@email.com", "Owner6", "User");
         em.persist(owner);
 
@@ -191,16 +212,46 @@ class BookingServiceImplTest {
 
         BookingResponseDto result = service.finalizeBooking(owner.getId(), booking.getId(), false);
 
-        assertThat(result.getStatus(), equalTo(BookingStatus.REJECTED));
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.REJECTED);
 
         TypedQuery<Booking> query = em.createQuery("SELECT b FROM Booking b WHERE b.id = :id", Booking.class);
         Booking updatedBooking = query.setParameter("id", booking.getId()).getSingleResult();
 
-        assertThat(updatedBooking.getStatus(), equalTo(BookingStatus.REJECTED));
+        assertThat(updatedBooking.getStatus()).isEqualTo(BookingStatus.REJECTED);
     }
 
     @Test
-    void testFinalizeBooking_WhenNotOwner_ShouldThrowException() {
+    void testFinalizeBookingWhenBookingAlreadyApproved() {
+        User owner = makeUser("owner_approved@email.com", "Owner", "Approved");
+        em.persist(owner);
+
+        User booker = makeUser("booker_approved@email.com", "Booker", "Approved");
+        em.persist(booker);
+
+        Item item = makeItem("Item Approved", "Description", owner, true);
+        em.persist(item);
+
+        Booking booking = makeBooking(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2),
+                item,
+                booker,
+                BookingStatus.APPROVED
+        );
+        em.persist(booking);
+        em.flush();
+
+        BookingResponseDto result = service.finalizeBooking(owner.getId(), booking.getId(), false);
+
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.REJECTED);
+
+        TypedQuery<Booking> query = em.createQuery("SELECT b FROM Booking b WHERE b.id = :id", Booking.class);
+        Booking updatedBooking = query.setParameter("id", booking.getId()).getSingleResult();
+        assertThat(updatedBooking.getStatus()).isEqualTo(BookingStatus.REJECTED);
+    }
+
+    @Test
+    void testFinalizeBooking_WhenNotOwner() {
         User owner = makeUser("owner7@email.com", "Owner7", "User");
         em.persist(owner);
 
@@ -228,6 +279,41 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void testFinalizeBookingWhenBookingNotFound() {
+        User owner = makeUser("owner_notfound@email.com", "Owner", "NotFound");
+        em.persist(owner);
+        em.flush();
+
+        assertThrows(NotFoundException.class, () ->
+                service.finalizeBooking(owner.getId(), 9999L, true));
+    }
+
+    @Test
+    void testFinalizeBookingWhenUserNotFound() {
+        User owner = makeUser("owner_finalize@email.com", "Owner", "Finalize");
+        em.persist(owner);
+
+        User booker = makeUser("booker_finalize@email.com", "Booker", "Finalize");
+        em.persist(booker);
+
+        Item item = makeItem("Item Finalize", "Description", owner, true);
+        em.persist(item);
+
+        Booking booking = makeBooking(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2),
+                item,
+                booker,
+                BookingStatus.WAITING
+        );
+        em.persist(booking);
+        em.flush();
+
+        assertThrows(ValidationException.class, () ->
+                service.finalizeBooking(9999L, booking.getId(), true));
+    }
+
+    @Test
     void testGetBookingById() {
         User owner = makeUser("owner8@email.com", "Owner8", "User");
         em.persist(owner);
@@ -250,14 +336,14 @@ class BookingServiceImplTest {
         em.flush();
 
         BookingResponseDto resultByBooker = service.getBookingById(booker.getId(), booking.getId());
-        assertThat(resultByBooker.getId(), equalTo(booking.getId()));
+        assertThat(resultByBooker.getId()).isEqualTo(booking.getId());
 
         BookingResponseDto resultByOwner = service.getBookingById(owner.getId(), booking.getId());
-        assertThat(resultByOwner.getId(), equalTo(booking.getId()));
+        assertThat(resultByOwner.getId()).isEqualTo(booking.getId());
     }
 
     @Test
-    void testGetBookingById_WhenNotBookerOrOwner_ShouldThrowException() {
+    void testGetBookingByIdWhenNotBookerOrOwner() {
         User owner = makeUser("owner9@email.com", "Owner9", "User");
         em.persist(owner);
 
@@ -285,6 +371,16 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void testGetBookingByIdWhenBookingNotFound() {
+        User user = makeUser("user_notfound@email.com", "User", "NotFound");
+        em.persist(user);
+        em.flush();
+
+        assertThrows(NotFoundException.class, () ->
+                service.getBookingById(user.getId(), 9999L));
+    }
+
+    @Test
     void testGetBookingsByUser() {
         User owner = makeUser("owner10@email.com", "Owner10", "User");
         em.persist(owner);
@@ -308,8 +404,119 @@ class BookingServiceImplTest {
 
         List<BookingResponseDto> result = service.getBookingsByUser(booker.getId(), "ALL");
 
-        assertThat(result, hasSize(1));
-        assertThat(result.getFirst().getId(), equalTo(booking.getId()));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(booking.getId());
+    }
+
+    @Test
+    void testGetBookingsByUserWithDifferentStates() {
+        User owner = makeUser("owner_states@email.com", "Owner", "States");
+        em.persist(owner);
+
+        User booker = makeUser("booker_states@email.com", "Booker", "States");
+        em.persist(booker);
+
+        Item item = makeItem("Item States", "Description", owner, true);
+        em.persist(item);
+
+        Booking pastBooking = makeBooking(
+                LocalDateTime.now().minusDays(3),
+                LocalDateTime.now().minusDays(1),
+                item,
+                booker,
+                BookingStatus.APPROVED
+        );
+        em.persist(pastBooking);
+
+        Booking currentBooking = makeBooking(
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1),
+                item,
+                booker,
+                BookingStatus.APPROVED
+        );
+        em.persist(currentBooking);
+
+        Booking futureBooking = makeBooking(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(3),
+                item,
+                booker,
+                BookingStatus.WAITING
+        );
+        em.persist(futureBooking);
+
+        Booking rejectedBooking = makeBooking(
+                LocalDateTime.now().plusDays(4),
+                LocalDateTime.now().plusDays(6),
+                item,
+                booker,
+                BookingStatus.REJECTED
+        );
+        em.persist(rejectedBooking);
+
+        em.flush();
+
+        assertThat(service.getBookingsByUser(booker.getId(), "ALL")).hasSize(4);
+        assertThat(service.getBookingsByUser(booker.getId(), "PAST")).hasSize(1);
+        assertThat(service.getBookingsByUser(booker.getId(), "CURRENT")).hasSize(1);
+        assertThat(service.getBookingsByUser(booker.getId(), "FUTURE")).hasSize(2);
+        assertThat(service.getBookingsByUser(booker.getId(), "WAITING")).hasSize(1);
+        assertThat(service.getBookingsByUser(booker.getId(), "REJECTED")).hasSize(1);
+    }
+
+    @Test
+    void testGetBookingsByUserWithInvalidState() {
+        User booker = makeUser("booker_invalid@email.com", "Booker", "Invalid");
+        em.persist(booker);
+        em.flush();
+
+        assertThrows(ValidationException.class, () ->
+                service.getBookingsByUser(booker.getId(), "INVALID_STATE"));
+    }
+
+    @Test
+    void testGetBookingsByUserWithLowerCaseState() {
+        User owner = makeUser("owner_lower@email.com", "Owner", "Lower");
+        em.persist(owner);
+
+        User booker = makeUser("booker_lower@email.com", "Booker", "Lower");
+        em.persist(booker);
+
+        Item item = makeItem("Item Lower", "Description", owner, true);
+        em.persist(item);
+
+        Booking booking = makeBooking(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2),
+                item,
+                booker,
+                BookingStatus.WAITING
+        );
+        em.persist(booking);
+        em.flush();
+
+        List<BookingResponseDto> result = service.getBookingsByUser(booker.getId(), "all");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(booking.getId());
+    }
+
+    @Test
+    void testGetBookingsByUserEmptyResult() {
+        User booker = makeUser("booker_empty@email.com", "Booker", "Empty");
+        em.persist(booker);
+        em.flush();
+
+        List<BookingResponseDto> result = service.getBookingsByUser(booker.getId(), "ALL");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testGetBookingsByUserWhenUserNotFound() {
+        assertThrows(NotFoundException.class, () ->
+                service.getBookingsByUser(9999L, "ALL"));
     }
 
     @Test
@@ -336,17 +543,87 @@ class BookingServiceImplTest {
 
         List<BookingResponseDto> result = service.getBookingsByOwner(owner.getId(), "ALL");
 
-        assertThat(result, hasSize(1));
-        assertThat(result.getFirst().getId(), equalTo(booking.getId()));
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(booking.getId());
     }
 
     @Test
-    void testGetBookingsByOwner_WhenNoItems_ShouldThrowException() {
+    void testGetBookingsByOwnerWithDifferentStates() {
+        User owner = makeUser("owner_states2@email.com", "Owner", "States2");
+        em.persist(owner);
+
+        User booker = makeUser("booker_states2@email.com", "Booker", "States2");
+        em.persist(booker);
+
+        Item item = makeItem("Item States2", "Description", owner, true);
+        em.persist(item);
+
+        Booking pastBooking = makeBooking(
+                LocalDateTime.now().minusDays(3),
+                LocalDateTime.now().minusDays(1),
+                item,
+                booker,
+                BookingStatus.APPROVED
+        );
+        em.persist(pastBooking);
+
+        Booking futureBooking = makeBooking(
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(3),
+                item,
+                booker,
+                BookingStatus.WAITING
+        );
+        em.persist(futureBooking);
+
+        em.flush();
+
+        assertThat(service.getBookingsByOwner(owner.getId(), "ALL")).hasSize(2);
+        assertThat(service.getBookingsByOwner(owner.getId(), "PAST")).hasSize(1);
+        assertThat(service.getBookingsByOwner(owner.getId(), "FUTURE")).hasSize(1);
+        assertThat(service.getBookingsByOwner(owner.getId(), "WAITING")).hasSize(1);
+    }
+
+    @Test
+    void testGetBookingsByOwnerWhenNoItems() {
         User userWithoutItems = makeUser("noitems@email.com", "NoItems", "User");
         em.persist(userWithoutItems);
         em.flush();
 
         assertThrows(NotFoundException.class, () -> service.getBookingsByOwner(userWithoutItems.getId(), "ALL"));
+    }
+
+    @Test
+    void testGetBookingsByOwnerWithInvalidState() {
+        User owner = makeUser("owner_invalid@email.com", "Owner", "Invalid");
+        em.persist(owner);
+
+        Item item = makeItem("Item Invalid", "Description", owner, true);
+        em.persist(item);
+        em.flush();
+
+        assertThrows(ValidationException.class, () ->
+                service.getBookingsByOwner(owner.getId(), "INVALID_STATE"));
+    }
+
+    @Test
+    void testGetBookingsByOwnerEmptyResult() {
+        User owner = makeUser("owner_empty@email.com", "Owner", "Empty");
+        em.persist(owner);
+
+        Item item = makeItem("Item Empty", "Description", owner, true);
+        em.persist(item);
+        em.flush();
+
+        List<BookingResponseDto> result = service.getBookingsByOwner(owner.getId(), "ALL");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testGetBookingsByOwnerWhenUserNotFound() {
+        assertThrows(NotFoundException.class, () ->
+                service.getBookingsByOwner(9999L, "ALL"));
     }
 
     private User makeUser(String email, String name, String lastName) {

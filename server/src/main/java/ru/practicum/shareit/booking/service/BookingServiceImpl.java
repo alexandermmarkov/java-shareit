@@ -45,6 +45,11 @@ public class BookingServiceImpl implements BookingService {
             log.debug(itemRepository.findAll().stream().map(Item::getId).toList().toString());
             return new NotFoundException("Вещь с ID = '" + bookingDto.getItemId() + "' не найдена");
         });
+
+        if (Objects.equals(userId, item.getOwner().getId())) {
+            throw new ValidationException("Нельзя бронировать собственную вещь");
+        }
+
         if (!item.getAvailable()) {
             throw new ValidationException("Вещь с ID = '"
                     + bookingDto.getItemId() + "' на данный момент недоступна для брони");

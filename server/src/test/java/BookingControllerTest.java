@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = BookingController.class)
 @ContextConfiguration(classes = ShareItServer.class)
-class BookingControllerTest {
+public class BookingControllerTest {
 
     @Autowired
     ObjectMapper mapper;

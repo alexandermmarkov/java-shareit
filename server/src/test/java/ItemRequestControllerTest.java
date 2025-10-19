@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = ItemRequestController.class)
 @ContextConfiguration(classes = ShareItServer.class)
-class ItemRequestControllerTest {
+public class ItemRequestControllerTest {
 
     @Autowired
     ObjectMapper mapper;
