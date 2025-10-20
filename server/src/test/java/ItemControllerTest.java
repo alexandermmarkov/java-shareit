@@ -8,8 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.ShareItServer;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemController;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -220,7 +220,7 @@ public class ItemControllerTest {
     @Test
     void addCommentWhenServiceThrowsValidationException() throws Exception {
         Mockito.when(itemService.addComment(anyLong(), anyLong(), any(CommentDto.class)))
-                .thenThrow(new ValidationException("User hasn't booked this item"));
+                .thenThrow(new IncorrectDataException("User hasn't booked this item"));
 
         mvc.perform(post("/items/1/comment")
                         .header("X-Sharer-User-Id", 2L)
@@ -228,7 +228,7 @@ public class ItemControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

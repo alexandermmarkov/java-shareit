@@ -13,8 +13,8 @@ import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -229,7 +229,7 @@ public class BookingControllerTest {
     @Test
     void addBookingWhenServiceThrowsValidationException() throws Exception {
         Mockito.when(bookingService.addBooking(anyLong(), any(BookingDto.class)))
-                .thenThrow(new ValidationException("Item is not available"));
+                .thenThrow(new IncorrectDataException("Item is not available"));
 
         mvc.perform(post("/bookings")
                         .header("X-Sharer-User-Id", 1L)
@@ -237,7 +237,7 @@ public class BookingControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -270,7 +270,7 @@ public class BookingControllerTest {
     @Test
     void getBookingsByUserWhenServiceThrowsValidationException() throws Exception {
         Mockito.when(bookingService.getBookingsByUser(anyLong(), anyString()))
-                .thenThrow(new ValidationException("Unknown state: INVALID_STATE"));
+                .thenThrow(new IncorrectDataException("Unknown state: INVALID_STATE"));
 
         mvc.perform(get("/bookings")
                         .header("X-Sharer-User-Id", 1L)
@@ -278,7 +278,7 @@ public class BookingControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

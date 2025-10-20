@@ -298,7 +298,7 @@ class UserControllerValidationTest {
 
         mockMvc.perform(post("/users")
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -307,7 +307,7 @@ class UserControllerValidationTest {
 
         mockMvc.perform(patch("/users/1")
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -315,7 +315,7 @@ class UserControllerValidationTest {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ invalid json }"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -323,7 +323,7 @@ class UserControllerValidationTest {
         mockMvc.perform(patch("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ invalid json }"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

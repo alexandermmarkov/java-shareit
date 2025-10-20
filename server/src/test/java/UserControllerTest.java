@@ -8,8 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.ShareItServer;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.UserController;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
@@ -138,14 +138,14 @@ class UserControllerTest {
     @Test
     void createUserWhenServiceThrowsValidationException() throws Exception {
         Mockito.when(userService.createUser(any(UserDto.class)))
-                .thenThrow(new ValidationException("Email already exists"));
+                .thenThrow(new IncorrectDataException("Email already exists"));
 
         mvc.perform(post("/users")
                         .content(mapper.writeValueAsString(userDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -164,14 +164,14 @@ class UserControllerTest {
     @Test
     void updateUserWhenServiceThrowsValidationException() throws Exception {
         Mockito.when(userService.updateUser(anyLong(), any(UserDto.class)))
-                .thenThrow(new ValidationException("Invalid email format"));
+                .thenThrow(new IncorrectDataException("Invalid email format"));
 
         mvc.perform(patch("/users/1")
                         .content(mapper.writeValueAsString(updatedUserDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

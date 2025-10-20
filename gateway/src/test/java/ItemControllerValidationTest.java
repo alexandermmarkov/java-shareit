@@ -342,7 +342,7 @@ class ItemControllerValidationTest {
         mockMvc.perform(post("/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -352,26 +352,26 @@ class ItemControllerValidationTest {
         mockMvc.perform(patch("/items/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getItemWithDateByIdWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/items/1"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getItemsWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/items"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void searchItemsWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/items/search")
                         .param("text", "drill"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -381,14 +381,14 @@ class ItemControllerValidationTest {
         mockMvc.perform(post("/items/1/comment")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void searchItemsWithoutTextParam() throws Exception {
         mockMvc.perform(get("/items/search")
                         .header("X-Sharer-User-Id", 1L))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

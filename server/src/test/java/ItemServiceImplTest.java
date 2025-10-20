@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.ShareItServer;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithDateDto;
@@ -373,7 +373,7 @@ public class ItemServiceImplTest {
 
         CommentDto commentDto = new CommentDto(null, "Nice item!", null, null);
 
-        assertThrows(ValidationException.class, () -> service.addComment(stranger.getId(), item.getId(), commentDto));
+        assertThrows(IncorrectDataException.class, () -> service.addComment(stranger.getId(), item.getId(), commentDto));
     }
 
     @Test
@@ -398,7 +398,7 @@ public class ItemServiceImplTest {
 
         CommentDto commentDto = new CommentDto(null, "Comment", null, null);
 
-        assertThrows(ValidationException.class, () -> service.addComment(booker.getId(), item.getId(), commentDto));
+        assertThrows(IncorrectDataException.class, () -> service.addComment(booker.getId(), item.getId(), commentDto));
     }
 
     @Test

@@ -267,25 +267,25 @@ class ItemRequestControllerValidationTest {
         mockMvc.perform(post("/requests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getItemRequestsWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/requests"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getAllItemRequestsWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/requests/all"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getItemRequestByIdWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/requests/1"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -316,20 +316,20 @@ class BookingControllerValidationTest {
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void getBookingByIdWithoutUserIdHeader() throws Exception {
         mockMvc.perform(get("/bookings/1"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void finalizeBookingWithoutUserIdHeader() throws Exception {
         mockMvc.perform(patch("/bookings/1")
                         .param("approved", "true"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

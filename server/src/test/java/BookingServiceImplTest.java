@@ -10,8 +10,8 @@ import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
@@ -92,7 +92,7 @@ public class BookingServiceImplTest {
                 null
         );
 
-        assertThrows(ValidationException.class, () -> service.addBooking(booker.getId(), bookingDto));
+        assertThrows(IncorrectDataException.class, () -> service.addBooking(booker.getId(), bookingDto));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class BookingServiceImplTest {
                 null
         );
 
-        assertThrows(ValidationException.class, () -> service.addBooking(owner.getId(), bookingDto));
+        assertThrows(IncorrectDataException.class, () -> service.addBooking(owner.getId(), bookingDto));
     }
 
     @Test
@@ -275,7 +275,7 @@ public class BookingServiceImplTest {
 
         em.flush();
 
-        assertThrows(ValidationException.class, () -> service.finalizeBooking(stranger.getId(), booking.getId(), true));
+        assertThrows(IncorrectDataException.class, () -> service.finalizeBooking(stranger.getId(), booking.getId(), true));
     }
 
     @Test
@@ -309,7 +309,7 @@ public class BookingServiceImplTest {
         em.persist(booking);
         em.flush();
 
-        assertThrows(ValidationException.class, () ->
+        assertThrows(IncorrectDataException.class, () ->
                 service.finalizeBooking(9999L, booking.getId(), true));
     }
 
@@ -367,7 +367,7 @@ public class BookingServiceImplTest {
 
         em.flush();
 
-        assertThrows(ValidationException.class, () -> service.getBookingById(stranger.getId(), booking.getId()));
+        assertThrows(IncorrectDataException.class, () -> service.getBookingById(stranger.getId(), booking.getId()));
     }
 
     @Test
@@ -471,7 +471,7 @@ public class BookingServiceImplTest {
         em.persist(booker);
         em.flush();
 
-        assertThrows(ValidationException.class, () ->
+        assertThrows(IncorrectDataException.class, () ->
                 service.getBookingsByUser(booker.getId(), "INVALID_STATE"));
     }
 
@@ -602,7 +602,7 @@ public class BookingServiceImplTest {
         em.persist(item);
         em.flush();
 
-        assertThrows(ValidationException.class, () ->
+        assertThrows(IncorrectDataException.class, () ->
                 service.getBookingsByOwner(owner.getId(), "INVALID_STATE"));
     }
 
