@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithDateDto;
@@ -153,7 +153,7 @@ public class ItemServiceImpl implements ItemService {
                 .findByBookerIdAndItemIdAndEndIsBeforeAndStatus(userId, itemId, LocalDateTime.now(),
                         BookingStatus.APPROVED);
         if (booking.isEmpty()) {
-            throw new ValidationException("Данная вещь не была забронирована пользователем " +
+            throw new IncorrectDataException("Данная вещь не была забронирована пользователем " +
                     "или срок действия брони ещё не истёк");
         }
         commentDto.setAuthorName(user.getName());

@@ -13,8 +13,8 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.User;
@@ -47,11 +47,11 @@ public class BookingServiceImpl implements BookingService {
         });
 
         if (Objects.equals(userId, item.getOwner().getId())) {
-            throw new ValidationException("Нельзя бронировать собственную вещь");
+            throw new IncorrectDataException("Нельзя бронировать собственную вещь");
         }
 
         if (!item.getAvailable()) {
-            throw new ValidationException("Вещь с ID = '"
+            throw new IncorrectDataException("Вещь с ID = '"
                     + bookingDto.getItemId() + "' на данный момент недоступна для брони");
         }
         bookingDto.setStatus(BookingStatus.WAITING);
@@ -68,7 +68,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = getBookingIfExists(bookingId);
         if (!Objects.equals(userId, booking.getItem().getOwner().getId())) {
-            throw new ValidationException("Пользователь с ID='" + userId + "' " +
+            throw new IncorrectDataException("Пользователь с ID='" + userId + "' " +
                     "не является владельцем вещи с ID='" + booking.getItem().getOwner().getId() + "'");
         }
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
@@ -88,7 +88,7 @@ public class BookingServiceImpl implements BookingService {
                     userId,
                     booking.getBooker().getId(),
                     booking.getItem().getOwner().getId());
-            throw new ValidationException("Пользователь с ID='" + userId + "' " +
+            throw new IncorrectDataException("Пользователь с ID='" + userId + "' " +
                     "не является владельцем или автором бронирования вещи с ID='" + booking.getItem().getId() + "'");
         }
 
@@ -104,7 +104,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             bookingState = BookingState.valueOf(state.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new ValidationException("Значение параметра запроса state '" + state + "' некорректно");
+            throw new IncorrectDataException("Значение параметра запроса state '" + state + "' некорректно");
         }
 
         BooleanExpression byUserId = QBooking.booking.booker.id.eq(userId);
@@ -141,7 +141,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             bookingState = BookingState.valueOf(state.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new ValidationException("Значение параметра запроса state '" + state + "' некорректно");
+            throw new IncorrectDataException("Значение параметра запроса state '" + state + "' некорректно");
         }
 
         BooleanExpression byOwnerId = QBooking.booking.item.owner.id.eq(userId);

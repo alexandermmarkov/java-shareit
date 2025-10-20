@@ -14,9 +14,9 @@ import java.util.Optional;
 
 @Slf4j
 @RestControllerAdvice
+@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class ErrorHandler {
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Optional<ErrorResponse> handleConstraintViolationException(final ConstraintViolationException e) {
         Optional<ErrorResponse> errorResponse = e.getConstraintViolations().stream()
                 .map(
@@ -37,28 +37,24 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
         log.error("Исключение IllegalArgumentException по причине: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
         log.warn("Исключение MethodArgumentNotValidException по причине: {}", e.getMessage());
         return new ErrorResponse(e.getBindingResult().getFieldErrors().getFirst().getDefaultMessage());
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(final ValidationException e) {
         log.warn("Исключение ValidationException по причине: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleThrowable(final Throwable e) {
         log.error("Исключение Throwable по причине: {}", e.getMessage());
         return new ErrorResponse("Произошла непредвиденная ошибка: " + e.getMessage());
